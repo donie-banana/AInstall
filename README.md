@@ -1,5 +1,11 @@
 # AInstall
 Checks multiple installation tools to more easily install whatever you want. 
+Only works on PowerShell, i recommend using it with admin privileges.
+
+# Easy install
+1. install release
+2. run Install.bat
+3. done!
 
 # Once installed
 Once you have it installed, run 'AInstallPre' to install the prerequisites for the other commands.
