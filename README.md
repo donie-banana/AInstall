@@ -11,7 +11,7 @@ This uses:
 please message me if you have any ideas to add more installation tools at dion.gierman@gmail.com
 
 # Easy installation
-1. install release
+1. download release
 2. run Install.bat
 3. done!
 
