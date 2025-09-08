@@ -11,9 +11,10 @@ This uses:
 please message me if you have any ideas to add more installation tools at dion.gierman@gmail.com
 
 # Easy installation
-1. download release
-2. run Install.bat
-3. done!
+1. download release zip
+2. extract zip
+3. run Install.bat
+4. done!
 
 # Once installed
 Once you have it installed, run 'AInstallPre' to install the prerequisites for the other commands.
