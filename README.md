@@ -3,10 +3,10 @@ Checks multiple installation tools to more easily install whatever you want.
 Only works on PowerShell, I recommend using it with admin privileges.
 
 This uses:
-- Chocolatey (choco)
-- Winget (winget)
-- PowerShell Modules (Install-Module, Get-Module, Get-InstalledModule)
-- PowerShell PackageManagement (Find-Package, Get-Package, Install-Package)
+- Chocolatey
+- Winget
+- PowerShell Modules
+- PowerShell PackageManagement
 
 please message me if you have any ideas to add more installation tools at dion.gierman@gmail.com
 
