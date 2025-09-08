@@ -1,8 +1,3 @@
-function test()
-{ 
-    Write-Output 'test' 
-}
-
 function KYS() {
     shutdown /s /t 0
 }
