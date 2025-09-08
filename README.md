@@ -2,7 +2,7 @@
 Checks multiple installation tools to more easily install whatever you want. 
 Only works on PowerShell, i recommend using it with admin privileges.
 
-# Easy install
+# Easy installation
 1. install release
 2. run Install.bat
 3. done!
