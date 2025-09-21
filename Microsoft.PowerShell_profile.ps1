@@ -6,13 +6,17 @@ function RestartTerminal {
     param(
         [switch]$noadmin
     )
-    $psExe = "$($env:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"
-    if ($noadmin) {
-        Start-Process -FilePath $psExe
-        Write-Host "A new non-admin PowerShell window has been opened. This window will now close."
+    $wtPath = Get-Command wt.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue
+    if ($wtPath) {
+        $exe = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        $exeName = Split-Path $exe -Leaf
+
+        Start-Process wt.exe -ArgumentList "new-tab $exeName"
+        Write-Host "A new Windows Terminal tab with $exeName has been opened. This window will now close."
     } else {
-        Start-Process -FilePath $psExe -Verb RunAs
-        Write-Host "A new admin PowerShell window has been opened. This window will now close."
+        $exe = [System.Diagnostics.Process]::GetCurrentProcess().MainModule.FileName
+        Start-Process -FilePath $exe
+        Write-Host "A new PowerShell window has been opened. This window will now close."
     }
     Start-Sleep -Seconds 2
     exit
@@ -224,14 +228,45 @@ function AUpdate() {
             $repo = "donie-banana/AInstall"
             $apiUrl = "https://api.github.com/repos/$repo/releases/latest"
             $release = Invoke-RestMethod -Uri $apiUrl
+
             $latestVersion = $release.tag_name
-            $CurrentVersion = "v1.1" # versie
+            $CurrentVersion = "v1" # versie
 
             if ($CurrentVersion -eq $latestVersion) {
                 Write-Host "You are already on the latest version ($CurrentVersion)." -ForegroundColor Green
                 return
             }
-            $zipUrl = $release.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1 -ExpandProperty browser_download_url
+
+            Write-Host "Release assets:" -ForegroundColor Cyan
+            if ($release.assets) {
+                foreach ($asset in $release.assets) {
+                    Write-Host " - $($asset.name) [$($asset.content_type)]"
+                }
+            } else {
+                Write-Host "No assets found in release." -ForegroundColor Yellow
+            }
+
+            $zipAsset = $null
+            $zipUrl = $null
+            if ($release.assets) {
+                $zipAsset = $release.assets | Where-Object {
+                    ($_.name -match "\.zip$") -or ($_.content_type -eq "application/zip")
+                } | Select-Object -First 1
+                if ($zipAsset) {
+                    $zipUrl = $zipAsset.browser_download_url
+                }
+            }
+
+            if (-not $zipUrl -and $release.zipball_url) {
+                $zipUrl = $release.zipball_url
+                Write-Host "Using GitHub source zipball_url." -ForegroundColor Yellow
+            }
+
+            if (-not $zipUrl) {
+                Write-Host "No .zip asset or source zipball found in the latest release. Update aborted." -ForegroundColor Red
+                return
+            }
+
             $zipPath = "$env:TEMP\AInstall-latest.zip"
             $extractPath = "$env:TEMP\AInstall-latest"
 
@@ -239,12 +274,17 @@ function AUpdate() {
             Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
 
             Write-Host "Extracting..."
+            if (Test-Path $extractPath) { Remove-Item $extractPath -Recurse -Force }
             Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
 
-            Write-Host "Running Install.bat..."
-            Start-Process -FilePath "$extractPath\Install.bat" -Verb RunAs
-
-            Write-Host "Update initiated. Please follow any prompts in the installer."
+            $installPS1 = Get-ChildItem -Path $extractPath -Filter Install.ps1 -Recurse | Select-Object -First 1
+            if ($installPS1) {
+                Write-Host "Running Install.ps1..."
+                Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$($installPS1.FullName)`"" -Verb RunAs
+                Write-Host "Update initiated."
+            } else {
+                Write-Host "Install.ps1 not found in the extracted files. Update aborted." -ForegroundColor Red
+            }
             continue
         }
 
