@@ -2,6 +2,22 @@ function KYS() {
     shutdown /s /t 0
 }
 
+function RestartTerminal {
+    param(
+        [switch]$noadmin
+    )
+    $psExe = "$($env:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"
+    if ($noadmin) {
+        Start-Process -FilePath $psExe
+        Write-Host "A new non-admin PowerShell window has been opened. This window will now close."
+    } else {
+        Start-Process -FilePath $psExe -Verb RunAs
+        Write-Host "A new admin PowerShell window has been opened. This window will now close."
+    }
+    Start-Sleep -Seconds 2
+    exit
+}
+
 function AInstallChoco() {
     Set-ExecutionPolicy Bypass -Scope Process -Force; `
     [System.Net.ServicePointManager]::SecurityProtocol = `
@@ -115,59 +131,29 @@ function check() {
     }
 }
 
-function AUninstall() {
-    foreach ($pkg in $args) {
-        $installedChoco = checkR installed $pkg choco
-        if ($installedChoco) {
-            choco unistall $pkg
-            continue
-        }
-
-        $installedWinget = checkR installed $pkg winget
-        if ($installedWinget) {
-            winget install $pkg
-            continue
-        }
-
-        $installedPSModule = checkR installed $pkg PSModule
-        if ($installedPSModule) {
-            Install-Module -Name $pkg
-            continue
-        }  
-
-        $installedPSPKG = checkR installed $pkg PSPKG
-        if ($installedPSPKG) {
-            Install-Package $pkg
-            continue
-        }
-    }
-
-    Write-Host "Command finished..."
-}
-
 function AInstall() {
     foreach ($pkg in $args) {
         $existsChoco = checkR exists $pkg choco
         if ($existsChoco) {
-            choco install $pkg
+            choco install $pkg -y
             continue
         }
 
         $existsWinget = checkR exists $pkg winget
         if ($existsWinget) {
-            winget install $pkg
+            winget install $pkg --silent
             continue
         }
 
         $existsPSModule = checkR exists $pkg PSModule
         if ($existsPSModule) {
-            Install-Module -Name $pkg
+            Install-Module -Name $pkg -Force
             continue
         }  
 
         $existsPSPKG = checkR exists $pkg PSPKG
         if ($existsPSPKG) {
-            Install-Package $pkg
+            Install-Package $pkg -Force
             continue
         }
 
@@ -184,6 +170,125 @@ function AInstall() {
         Write-Host ($existsPSPKG | Out-String).Trim() -ForegroundColor Gray
         Write-Host "=============================================" -ForegroundColor Yellow
         Write-Host ""
+    }
+    Write-Host "Command finished..."
+}
+
+function AUninstall() {
+    foreach ($pkg in $args) {
+        $installedChoco = checkR installed $pkg choco
+        if ($installedChoco) {
+            choco uninstall $pkg -y
+            continue
+        }
+
+        $installedWinget = checkR installed $pkg winget
+        if ($installedWinget) {
+            winget uninstall --id $pkg --silent
+            continue
+        }
+
+        $installedPSModule = checkR installed $pkg PSModule
+        if ($installedPSModule) {
+            Uninstall-Module -Name $pkg -Force
+            continue
+        }  
+
+        $installedPSPKG = checkR installed $pkg PSPKG
+        if ($installedPSPKG) {
+            Uninstall-Package -Name $pkg -Force
+            continue
+        }
+
+        Write-Host ""
+        Write-Host "=============================================" -ForegroundColor Yellow
+        Write-Host " Package '$pkg' not installed or not found in:" -ForegroundColor Red
+        Write-Host "   - Chocolatey:" -ForegroundColor DarkGray
+        Write-Host ($installedChoco | Out-String).Trim() -ForegroundColor Gray
+        Write-Host "   - Winget:" -ForegroundColor DarkGray
+        Write-Host ($installedWinget | Out-String).Trim() -ForegroundColor Gray
+        Write-Host "   - PowerShell Modules:" -ForegroundColor DarkGray
+        Write-Host ($installedPSModule | Out-String).Trim() -ForegroundColor Gray
+        Write-Host "   - PowerShell PackageManagement:" -ForegroundColor DarkGray
+        Write-Host ($installedPSPKG | Out-String).Trim() -ForegroundColor Gray
+        Write-Host "=============================================" -ForegroundColor Yellow
+        Write-Host ""
+    }
+    Write-Host "Command finished..."
+}
+
+function AUpdate() {
+    $restart = false
+    foreach ($pkg in $args) {
+        if ($pkg -eq "self") {
+            $repo = "donie-banana/AInstall"
+            $apiUrl = "https://api.github.com/repos/$repo/releases/latest"
+            $release = Invoke-RestMethod -Uri $apiUrl
+            $latestVersion = $release.tag_name
+            $CurrentVersion = "v1.1" # versie
+
+            if ($CurrentVersion -eq $latestVersion) {
+                Write-Host "You are already on the latest version ($CurrentVersion)." -ForegroundColor Green
+                return
+            }
+            $zipUrl = $release.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1 -ExpandProperty browser_download_url
+            $zipPath = "$env:TEMP\AInstall-latest.zip"
+            $extractPath = "$env:TEMP\AInstall-latest"
+
+            Write-Host "Downloading latest release from $zipUrl..."
+            Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
+
+            Write-Host "Extracting..."
+            Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
+
+            Write-Host "Running Install.bat..."
+            Start-Process -FilePath "$extractPath\Install.bat" -Verb RunAs
+
+            Write-Host "Update initiated. Please follow any prompts in the installer."
+            continue
+        }
+
+        $installedChoco = checkR installed $pkg choco
+        if ($installedChoco) {
+            choco upgrade $pkg -y
+            continue
+        }
+
+        $installedWinget = checkR installed $pkg winget
+        if ($installedWinget) {
+            winget upgrade --id $pkg --silent
+            continue
+        }
+
+        $installedPSModule = checkR installed $pkg PSModule
+        if ($installedPSModule) {
+            Update-Module -Name $pkg -Force
+            continue
+        }
+
+        $installedPSPKG = checkR installed $pkg PSPKG
+        if ($installedPSPKG) {
+            Update-Package -Name $pkg -Force
+            continue
+        }
+
+        Write-Host ""
+        Write-Host "=============================================" -ForegroundColor Yellow
+        Write-Host " Package '$pkg' not installed or not found in:" -ForegroundColor Red
+        Write-Host "   - Chocolatey:" -ForegroundColor DarkGray
+        Write-Host ($installedChoco | Out-String).Trim() -ForegroundColor Gray
+        Write-Host "   - Winget:" -ForegroundColor DarkGray
+        Write-Host ($installedWinget | Out-String).Trim() -ForegroundColor Gray
+        Write-Host "   - PowerShell Modules:" -ForegroundColor DarkGray
+        Write-Host ($installedPSModule | Out-String).Trim() -ForegroundColor Gray
+        Write-Host "   - PowerShell PackageManagement:" -ForegroundColor DarkGray
+        Write-Host ($installedPSPKG | Out-String).Trim() -ForegroundColor Gray
+        Write-Host "=============================================" -ForegroundColor Yellow
+        Write-Host ""
+    }
+
+    if ($restart) {
+        RestartTerminal
     }
 
     Write-Host "Command finished..."
