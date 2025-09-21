@@ -218,7 +218,7 @@ function AUninstall() {
 }
 
 function AUpdate() {
-    $restart = false
+    $restart = $false
     foreach ($pkg in $args) {
         if ($pkg -eq "self") {
             $repo = "donie-banana/AInstall"
