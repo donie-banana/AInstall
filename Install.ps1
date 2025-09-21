@@ -4,6 +4,8 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
     exit
 }
 
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
 try {
     $source = Join-Path -Path $PSScriptRoot -ChildPath 'Microsoft.PowerShell_profile.ps1'
     $targetDir = Join-Path -Path $HOME -ChildPath 'Documents\WindowsPowerShell'
@@ -24,6 +26,7 @@ try {
     }
 
     Copy-Item -Path $source -Destination $target -Force
+    Unblock-File -Path "$HOME\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
     Write-Host "Profile updated successfully." -ForegroundColor Green
 }
 catch {
