@@ -5,16 +5,18 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 $source = Join-Path -Path $PSScriptRoot -ChildPath 'Microsoft.PowerShell_profile.ps1'
-$targetDir = Join-Path -Path $env:USERPROFILE -ChildPath 'Documents\WindowsPowerShell'
+$targetDir = Join-Path -Path $HOME -ChildPath 'Documents\WindowsPowerShell'
 $target = Join-Path -Path $targetDir -ChildPath 'Microsoft.PowerShell_profile.ps1'
 
 if (-not (Test-Path $source)) {
     Write-Host "Source not found: $source" -ForegroundColor Red
+    Pause
     exit 1
 }
 
-if ($source -eq $target) {
+if ((Get-Item $source).FullName -eq (Get-Item $target).FullName) {
     Write-Host "Source and target are the same file. Aborting to avoid self-append." -ForegroundColor Yellow
+    Pause
     exit 1
 }
 
