@@ -13,7 +13,7 @@ please message me if you have any ideas to add more installation tools at dion.g
 # Easy installation
 1. download release zip
 2. extract zip
-3. run Install.bat
+3. run Install.ps1 (right click and press run with powershell)
 4. done!
 
 # Once installed
