@@ -230,7 +230,7 @@ function AUpdate() {
             $release = Invoke-RestMethod -Uri $apiUrl
 
             $latestVersion = $release.tag_name
-            $CurrentVersion = "v1" # versie
+            $CurrentVersion = "v1.1" # versie
 
             if ($CurrentVersion -eq $latestVersion) {
                 Write-Host "You are already on the latest version ($CurrentVersion)." -ForegroundColor Green
