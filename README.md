@@ -21,7 +21,7 @@ Once you have it installed, run 'AInstallPre' to install the prerequisites for t
 When that's done you can now use:
 - AInstall <name> (to install whatever you want (you can add multiple names for multiple installs))
 - AUninstall <name> (to uninstall whatever you want (you can add multiple names for multiple installs))
-- AUpgrade <name> (to upgrade whatever you want (you can add multiple names for multiple installs))
+- AUpdate <name> (to upgrade whatever you want (you can add multiple names for multiple installs))
 - check <exists/installed> <name> <(optional) manager> (to check if something exists and if it is installed)
 - RestartTerminal <(optional) -no-admin> (this, well, restarts the terminal. automatically in admin.)
 - KYS (this just shuts off your computer, no real reason)
